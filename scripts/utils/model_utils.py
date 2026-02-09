@@ -123,39 +123,4 @@ def generate_response(
     )
     
     return response
-EOF
 
-# Create __init__.py
-!cat > utils/__init__.py << 'EOF'
-from .answer_extraction import (
-    extract_answer_math,
-    normalize_answer,
-    check_answer_correct,
-    extract_answer_gpqa
-)
-from .model_utils import (
-    load_model_and_tokenizer,
-    generate_response
-)
-from .data_utils import (
-    load_math500_dataset,
-    load_gpqa_dataset
-)
-
-__all__ = [
-    'extract_answer_math',
-    'normalize_answer', 
-    'check_answer_correct',
-    'extract_answer_gpqa',
-    'load_model_and_tokenizer',
-    'generate_response',
-    'load_math500_dataset',
-    'load_gpqa_dataset'
-]
-EOF
-
-# Run evaluation with Llama 3.2 3B
-!python scripts/eval_math500.py --model "unsloth/Llama-3.2-3B-Instruct" --dry-run
-
-# Show results
-!cat results/math500/summary_*.txt
