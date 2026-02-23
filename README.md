@@ -1,247 +1,229 @@
-# LLM Benchmark Baselines
+# SLM-MUX: Orchestrating Small Language Models for Reasoning
 
-Official baseline implementations for evaluating language models on academic benchmarks. This repository provides reproducible evaluation scripts for multiple models across standard reasoning and math benchmarks.
+This repository contains the implementation code for the SLM-MUX method, which effectively orchestrates multiple small language models (SLMs) to achieve superior reasoning performance.
 
-## 📊 Benchmark Results
-
-| Model | GSM8K | GPQA | MATH500 | SVAMP |
-|-------|-------|------|---------|-------|
-| **Qwen2.5-7B-Instruct** | 89.20% | 35.35% | **70.00%** | - |
-| **Llama 3.2 3B** | 86.80% | 33.33% | - | - |
-| **Mistral-7B-Instruct-v0.3** | 51.60% | **34.85%** | - | - |
-
-*Last updated: February 2026 | "-" indicates evaluation not yet completed*
-
-## 🎯 Supported Benchmarks
-
-### MATH-500
-Mathematical problem solving with 500 problems from the MATH dataset.
-- **Dataset Size**: 500 questions
-- **Answer Format**: LaTeX `\boxed{...}` 
-- **Evaluation**: Normalized string matching
-- **Status**: ✅ Complete scripts available
-
-### GPQA
-Graduate-level science questions testing PhD-level knowledge.
-- **Dataset Size**: 198 multiple-choice questions  
-- **Answer Format**: Single letter (A-D)
-- **Evaluation**: Exact match
-- **Status**: ✅ Complete scripts available
-
-### GSM8K
-Grade school math word problems.
-- **Dataset Size**: 1,319 questions
-- **Status**: 🚧 Coming soon
-
-### SVAMP
-Math word problems with varying structural complexity.
-- **Status**: 🚧 Coming soon
-
-## 🚀 Quick Start
-
-### Installation
-
-```bash
-git clone https://github.com/yourusername/llm-benchmark-baselines.git
-cd llm-benchmark-baselines
-pip install -r requirements.txt
-```
-
-### Running Evaluations
-
-**MATH-500 Evaluation:**
-```bash
-python scripts/eval_math500.py --model "Qwen/Qwen2.5-7B-Instruct"
-```
-
-**GPQA Evaluation:**
-```bash
-python scripts/eval_gpqa.py --model "mistralai/Mistral-7B-Instruct-v0.3"
-```
-
-**Dry Run (5 samples for testing):**
-```bash
-python scripts/eval_math500.py --model "Qwen/Qwen2.5-7B-Instruct" --dry-run
-```
-
-### Command-Line Options
-
-All evaluation scripts support the following arguments:
-
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `--model` | HuggingFace model identifier | Required |
-| `--dry-run` | Test on 5 samples only | False |
-| `--output-dir` | Directory for results | `./results` |
-| `--max-tokens` | Maximum generation length | 4096 (MATH), 2048 (GPQA) |
-| `--temperature` | Sampling temperature | 0.0 (greedy) |
-
-## 📁 Repository Structure
+## 📁 Project Structure
 
 ```
-llm-benchmark-baselines/
-├── scripts/
-│   ├── eval_math500.py          # MATH-500 evaluation
-│   ├── eval_gpqa.py             # GPQA evaluation  
-│   └── utils/                   # Shared utilities
-│       ├── __init__.py
-│       ├── answer_extraction.py # Answer parsing functions
-│       ├── model_utils.py       # Model loading utilities
-│       └── data_utils.py        # Dataset loading utilities
-├── results/                     # Evaluation outputs (gitignored)
-│   ├── math500/
-│   ├── gpqa/
-│   └── summaries/
-├── docs/
-│   ├── MATH500.md              # MATH-500 documentation
-│   ├── GPQA.md                 # GPQA documentation
-│   └── ADDING_BENCHMARKS.md    # Guide for adding new benchmarks
+slm_mux_code/
+├── slm_mux_orchestrator/ # Stage 2: SLM-MUX Orchestration
+│   ├── math_benchmark.py
+│   ├── gpqa_benchmark.py
+│   └── gsm8k_benchmark.py
+├── single_model_inference/ # Stage 1: Single Model Inference
+│   ├── collect_math.py
+│   ├── collect_gpqa.py
+│   └── collect_gsm8k.py
+├── data/
+├── evaluation/
+├── utils/
+├── config/
 ├── requirements.txt
-├── .gitignore
-├── LICENSE
 └── README.md
 ```
 
-## 📝 Output Format
+## 🚀 Quick Start
 
-Each evaluation produces two types of output files:
+### 1. Installation
 
-### 1. Detailed JSON Results
+```bash
+# Clone the repository
+git clone https://github.com/slm-mux/slm-mux.github.io.git
+cd slm-mux.github.io/slm_mux_code
 
-Filename: `{model_name}_{benchmark}_{timestamp}.json`
+# Install dependencies
+pip install -r requirements.txt
+```
 
+### 2. Configuration
+
+Set up your API keys as environment variables:
+
+```bash
+export TOGETHER_API_KEY="your_together_api_key"
+export OPENAI_API_KEY="your_openai_api_key"  # Optional, for verification
+```
+
+### 3. Run SLM-MUX (Main Workflow)
+
+**Example: Run SLM-MUX on MATH with 2 models**
+```bash
+python slm_mux_orchestrator/math_benchmark.py \
+    --data_path data/math_500.json \
+    --output results/math_slmmux_results.json \
+    --models \
+        "mistralai/Mistral-7B-Instruct-v0.3" \
+        "Qwen/Qwen2.5-7B-Instruct" \
+    --extra_calls 3
+```
+
+**Example: Run SLM-MUX on GPQA**
+```bash
+python slm_mux_orchestrator/gpqa_benchmark.py \
+    --data_path data/gpqa_shuffled.json \
+    --output results/gpqa_slmmux_results.json \
+    --models \
+        "mistralai/Mistral-7B-Instruct-v0.3" \
+        "Qwen/Qwen2.5-7B-Instruct" \
+    --extra_calls 3
+```
+
+**Example: Run SLM-MUX on GSM8K**
+```bash
+python slm_mux_orchestrator/gsm8k_benchmark.py \
+    --data_path data/gsm8k_500.json \
+    --output results/gsm8k_slmmux_results.json \
+    --models \
+        "mistralai/Mistral-7B-Instruct-v0.3" \
+        "Qwen/Qwen2.5-7B-Instruct" \
+    --extra_calls 3
+```
+
+This will:
+1. Query all specified models for each problem
+2. Run each model multiple times (controlled by `--extra_calls`)
+3. Apply the SLM-MUX algorithm to select the best answer
+4. Save results with accuracy metrics
+
+### 4. Optional: Run Single Model Inference (For Comparison)
+
+If you want baseline performance for a single model:
+
+```bash
+python single_model_inference/collect_math.py \
+    --dataset data/math_500.json \
+    --model "mistralai/Mistral-7B-Instruct-v0.3" \
+    --output collected_outputs/math_mistral7b_baseline.json \
+    --num_llm_sub_iterations 3
+```
+
+**Note:** This is optional and only needed for comparison with single-model baselines.
+
+## 📊 Understanding the Results
+
+Each benchmark script outputs a JSON file containing:
+- Individual model responses and extracted answers
+- Vote counts for each unique answer
+- Selected final answer based on confidence
+- Token usage statistics
+- Overall accuracy
+
+Example output structure:
 ```json
 {
-  "model": "Qwen/Qwen2.5-7B-Instruct",
-  "benchmark": "math500",
-  "accuracy": 0.70,
-  "correct_count": 350,
-  "total": 500,
-  "timestamp": "2026-02-08T13:06:08",
-  "config": {
-    "temperature": 0.0,
-    "max_new_tokens": 4096
-  },
-  "results": [
-    {
-      "index": 0,
-      "problem": "What is 2+2?",
-      "reference_answer": "4",
-      "model_response": "The answer is \\boxed{4}",
-      "extracted_answer": "4",
-      "is_correct": true
-    }
-  ]
+    "problem_id": "...",
+    "problem": "...",
+    "reference_answer": "...",
+    "models": [
+        {
+            "model_name": "...",
+            "calls": [...],
+            "best_answer": "...",
+            "confidence": 0.67
+        }
+    ],
+    "final_answer": "...",
+    "is_correct": true
 }
 ```
 
-### 2. Summary Text File
+## 🔧 Optional: Single Model Baseline Collection
 
-Filename: `summary_{benchmark}_{model_name}.txt`
+The `single_model_inference/` directory contains scripts for collecting single-model baseline performance. **This is optional and only needed for comparison purposes.**
 
+```bash
+# Example: Collect MATH responses from a single model
+python single_model_inference/collect_math.py \
+    --dataset data/math_500.json \
+    --model "mistralai/Mistral-7B-Instruct-v0.3" \
+    --output collected_outputs/math_mistral7b_baseline.json \
+    --num_llm_sub_iterations 3
 ```
-Model: Qwen/Qwen2.5-7B-Instruct
-Benchmark: MATH-500
-Accuracy: 70.00% (350/500)
-Date: 2026-02-08 13:06:08
-Config: temperature=0.0, max_tokens=4096
+
+This is useful for comparing SLM-MUX results against individual model performance.
+
+## 🧪 Answer Equivalence Checking
+
+For MATH and GSM8K, we provide scripts to verify answer equivalence using GPT-4o:
+
+```bash
+# Check MATH answers
+python evaluation/check_equivalence_math.py \
+    --results results/math_results.json \
+    --output results/math_verified.json
+
+# Check GSM8K answers
+python evaluation/check_equivalence_gsm8k.py \
+    --results results/gsm8k_results.json \
+    --output results/gsm8k_verified.json
 ```
 
-## 🔧 Implementation Details
+## 📝 Key Components
 
-### MATH-500
-- Downloads from [SLM-MUX repository](https://github.com/slm-mux/slm-mux.github.io) with automatic fallback to HuggingFace
-- Uses greedy decoding (temperature=0.0) for reproducibility
-- Extracts answers from `\boxed{...}` with proper brace matching
-- Normalizes mathematical expressions:
-  - Fraction standardization (`\frac`, `\tfrac`, `\dfrac`)
-  - Square root formatting
-  - Unit removal
-  - Decimal/fraction normalization
+### SLM-MUX Algorithm (`slm_mux_orchestrator/`)
 
-### GPQA
-- 198 graduate-level multiple-choice questions in physics, chemistry, biology
-- Robust answer extraction with multiple patterns:
-  - `##Answer: X##` format (preferred)
-  - Standalone letter on its own line
-  - Letters in parentheses `(A)`
-  - Pattern-based extraction as fallback
-- Handles edge cases where models don't follow format
+The core of SLM-MUX involves:
+
+1. **Multiple Sampling**: Each model generates multiple responses (controlled by `--extra_calls`)
+2. **Confidence Estimation**: Count the frequency of each unique answer
+3. **Model Selection**: Choose the answer with highest confidence across models
+4. **Tie Breaking**: Use validation set performance when confidence scores tie
+
+### Single Model Inference (`single_model_inference/`) - Optional
+
+These scripts are **optional** and used for baseline comparison:
+- Collect responses from a single model for performance benchmarking
+- Generate prompts for each problem
+- Call the specified model via the Together API
+- Save raw responses and token usage for analysis
+
+### Answer Extraction (`utils/`)
+
+Each dataset has specialized answer extraction logic:
+- **MATH**: Extracts content within `\boxed{...}` and normalizes LaTeX
+- **GPQA**: Uses multiple choice extraction (A/B/C/D)
+- **GSM8K**: Extracts numerical answers with ####
+
+### API Integration
+
+The `api_client.py` supports:
+- Together AI API for running open-source models
+- OpenAI API for verification (optional)
+- Automatic retry with exponential backoff
+- Token usage tracking
 
 ## 🤝 Contributing
 
-We welcome contributions! To add a new benchmark or model:
-
-1. **Fork** the repository
-2. **Create a feature branch**: `git checkout -b feature/new-benchmark`
-3. **Follow the existing patterns** in `scripts/eval_*.py`
-4. **Update the results table** in README.md
-5. **Add documentation** in `docs/`
-6. **Submit a pull request**
-
-### Adding a New Benchmark
-
-See [`docs/ADDING_BENCHMARKS.md`](docs/ADDING_BENCHMARKS.md) for detailed instructions.
-
-Key requirements:
-- Use argparse for CLI arguments
-- Include dry-run mode (5 samples)
-- Save results in standardized JSON format
-- Add proper logging and error handling
-- Follow PEP 8 style guidelines
-
-## 📚 Citation
-
-If you use these baselines in your research, please cite:
-
-```bibtex
-@software{llm_benchmark_baselines_2024,
-  title = {LLM Benchmark Baselines: Reproducible Evaluation Scripts},
-  author = {Your Name},
-  year = {2024},
-  url = {https://github.com/yourusername/llm-benchmark-baselines}
-}
-```
-
-## 🙏 Acknowledgments
-
-This repository builds on excellent prior work:
-
-- **Datasets**:
-  - [SLM-MUX](https://github.com/slm-mux/slm-mux.github.io) - Dataset curation and benchmarking framework
-  - [MATH Dataset](https://github.com/hendrycks/math) - Hendrycks et al.
-  - [GPQA](https://github.com/idavidrein/gpqa) - Rein et al.
-  - [GSM8K](https://github.com/openai/grade-school-math) - OpenAI
-  
-- **Models**:
-  - [Qwen Team](https://huggingface.co/Qwen) - Qwen model series
-  - [Meta AI](https://huggingface.co/meta-llama) - Llama models
-  - [Mistral AI](https://huggingface.co/mistralai) - Mistral models
+When contributing code, please:
+1. Follow the existing code style (PEP 8)
+2. Add type hints to function signatures
+3. Include docstrings for public functions
+4. Update README if adding new features
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+This code is released under the MIT License. See LICENSE file for details.
 
-## 🐛 Issues & Support
+## 📚 Citation
 
-- **Found a bug?** [Open an issue](https://github.com/yourusername/llm-benchmark-baselines/issues)
-- **Have a question?** Check our [documentation](docs/) or start a [discussion](https://github.com/yourusername/llm-benchmark-baselines/discussions)
-- **Want to contribute?** See our [contributing guidelines](#contributing)
+If you use this code in your research, please cite:
 
-## 📈 Reproducibility
+```bibtex
+@article{slm-mux-2025,
+  title={SLM-MUX: Orchestrating Small Language Models for Reasoning},
+  author={Wang, Chenyu and Wan, Zishen and Kang, Hao and Chen, Emma and Xie, Zhiqiang and Krishna, Tushar and Reddi, Vijay Janapa and Du, Yilun},
+  year={2025}
+}
+```
 
-All evaluation scripts use:
-- Fixed random seeds for reproducibility
-- Greedy decoding (temperature=0.0) by default
-- Standardized prompting formats
-- Deterministic answer extraction
+## 🔗 Links
 
-Hardware used for reported results:
-- GPU: NVIDIA Tesla T4 (15GB VRAM)
-- Precision: bfloat16
-- Batch size: 1 (for consistency)
+- **Project Page**: https://slm-mux.github.io
+- **Paper**: [Under Review]
+- **GitHub**: https://github.com/slm-mux/SLM-MUX
 
----
+## 📧 Contact
 
- 
-**Last Updated:** February 2026
+For questions or issues, please:
+- Open an issue on GitHub
+- Contact: ydu@seas.harvard.edu
